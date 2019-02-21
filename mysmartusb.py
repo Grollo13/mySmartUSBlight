@@ -49,7 +49,7 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     if config.command not in commands:
-        print("invalid command: " + command)
+        print("invalid command: " + config.command)
     else:
         ser = serial.Serial(config.device, 115200)
         ser.write(commands[config.command])
