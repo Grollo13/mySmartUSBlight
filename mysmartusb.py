@@ -55,12 +55,25 @@ if __name__ == "__main__":
         ser.write(commands[config.command])
         ser.flush()
         time.sleep(0.1)
-        response =  ser.read(ser.inWaiting())
+        response = bytes(ser.read(ser.inWaiting()))
 
-
-        # 247 infos 247 177 code 13 10
-        info = response[1:len(response)-5]
-        code = response[len(response)-3]
-        print("Code:{}\nInfo({}):<{}>".format(code, len(info), info))
+        # Expected response structure (with <info> and <code> being 1 byte):
+        # [0xF7 <info>] 0xF7 0xB1 <code> 0x0D 0x0A
+        if len(response) is 5:
+            if int.from_bytes(response, byteorder='big') & 0xF7B1000D0A == 0xF7B1000D0A:
+                code = response[2]
+                print("Response code: " + hex(code))
+            else:
+                print("Unexpected 5 byte response")
+        elif len(response) is 7:
+            if int.from_bytes(response, byteorder='big') & 0xF700F7B1000D0A is 0xF700F7B1000D0A:
+                info = response[1]
+                code = response[4]
+                print("Response info: " + hex(info))
+                print("Response code: " + hex(code))
+            else:
+                print("Unexpected 7 byte response")
+        else:
+            print("Unexpected response length (" + str(len(response)) + " bytes received)")
 
         ser.close()
