@@ -1,4 +1,4 @@
-#/usr/bin/python
+#/usr/bin/python3
 import serial
 import argparse
 import os
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     if config.command not in commands:
-        print "invalid command: " + command
+        print("invalid command: " + command)
     else:
         ser = serial.Serial(config.device, 115200)
         ser.write(commands[config.command])
@@ -61,6 +61,6 @@ if __name__ == "__main__":
         # 247 infos 247 177 code 13 10
         info = response[1:len(response)-5]
         code = response[len(response)-3]
-        print "Code:{}\nInfo({}):<{}>".format(ord(code), len(info), info)
+        print("Code:{}\nInfo({}):<{}>".format(code, len(info), info))
 
         ser.close()
