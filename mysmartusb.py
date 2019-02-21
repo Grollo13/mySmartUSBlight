@@ -4,11 +4,7 @@ import argparse
 import os
 import time
 
-
-if __name__ == "__main__":
-
-
-    commands = dict(
+commands = dict(
         AVR910Mode=bytearray([0xe6, 0xb5, 0xba, 0xb9, 0xb2, 0xb3, 0xa9, 0x61]),
         BoardPowerOff=bytearray([0xe6, 0xb5, 0xba, 0xb9, 0xb2, 0xb3, 0xa9, 0x2d]),
         BoardPowerOn=bytearray([0xe6, 0xb5, 0xba, 0xb9, 0xb2, 0xb3, 0xa9, 0x2b]),
@@ -37,8 +33,22 @@ if __name__ == "__main__":
         version=bytearray([0xe6, 0xb5, 0xba, 0xb9, 0xb2, 0xb3, 0xa9, 0x76])
     )
 
+def evaluate_code(code, command):
+    if command == "powerStatus":
+        print("Power status: " + str(code & 0xF) + "V")
+    if command == "emulationStatus":
+        if code == 0x73:
+            print("Emulation mode: STK500")
+        if code == 0x61:
+            print("Emulation mode: AVR911")
+    if command == "powerOnBurnStatus":
+        if code == 0x77:
+            print("powerOnBurn is ON")
+        if code == 0x57:
+            print("powerOnBurn is OFF")
 
-
+if __name__ == "__main__":
+ 
     parser = argparse.ArgumentParser(
         description="mySmartUSB light Programmer Linux Utility"
     )
@@ -63,6 +73,7 @@ if __name__ == "__main__":
             if int.from_bytes(response, byteorder='big') & 0xF7B1000D0A == 0xF7B1000D0A:
                 code = response[2]
                 print("Response code: " + hex(code))
+                evaluate_code(code, config.command)
             else:
                 print("Unexpected 5 byte response")
         elif len(response) is 7:
@@ -71,9 +82,10 @@ if __name__ == "__main__":
                 code = response[4]
                 print("Response info: " + hex(info))
                 print("Response code: " + hex(code))
+                evaluate_code(code, config.command)
             else:
                 print("Unexpected 7 byte response")
-        else:
-            print("Unexpected response length (" + str(len(response)) + " bytes received)")
+        elif config.command == "version":
+            print(response)
 
         ser.close()
