@@ -46,6 +46,9 @@ def evaluate_code(code, command):
             print("powerOnBurn is ON")
         if code == 0x57:
             print("powerOnBurn is OFF")
+def evaluate_info(info, command):    
+    if command == "version":
+        print("Version: " + info.decode())
 
 if __name__ == "__main__":
  
@@ -67,7 +70,7 @@ if __name__ == "__main__":
         time.sleep(0.1)
         response = bytes(ser.read(ser.inWaiting()))
 
-        # Expected response structure (with <info> and <code> being 1 byte):
+        # Expected response structure (with <info> being one or more bytes and <code> being one byte):
         # [0xF7 <info>] 0xF7 0xB1 <code> 0x0D 0x0A
         if len(response) is 5:
             if int.from_bytes(response, byteorder='big') & 0xF7B1000D0A == 0xF7B1000D0A:
@@ -76,16 +79,18 @@ if __name__ == "__main__":
                 evaluate_code(code, config.command)
             else:
                 print("Unexpected 5 byte response")
-        elif len(response) is 7:
-            if int.from_bytes(response, byteorder='big') & 0xF700F7B1000D0A is 0xF700F7B1000D0A:
-                info = response[1]
-                code = response[4]
-                print("Response info: " + hex(info))
-                print("Response code: " + hex(code))
+        elif len(response) >= 7:
+            if response[0] == 0xF7 and \
+               int.from_bytes(response[-5:], byteorder='big') & 0xF7B1000D0A == 0xF7B1000D0A:
+                info = response[1:-5]
+                code = response[-2]
+                print("Info (raw): " + hex(int.from_bytes(info, byteorder='big')))
+                print("Code (raw): " + hex(code))
                 evaluate_code(code, config.command)
+                evaluate_info(info, config.command)
             else:
-                print("Unexpected 7 byte response")
-        elif config.command == "version":
-            print(response)
+                print("Unexpected long response")
+        else:
+            print("Unexpected response")
 
         ser.close()
